@@ -9,7 +9,7 @@ import (
 	"time"
 )
 
-const requestNumber = 10
+const requestNumber = 1
 
 func request(wg *sync.WaitGroup) {
 	defer wg.Done()
@@ -21,7 +21,7 @@ func request(wg *sync.WaitGroup) {
 		return
 	}
 
-	ctx, cancel := context.WithTimeout(req.Context(), 2*time.Second)
+	ctx, cancel := context.WithTimeout(req.Context(), 3*time.Second)
 	defer cancel()
 
 	req = req.WithContext(ctx)

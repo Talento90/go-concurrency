@@ -3,18 +3,21 @@ package main
 import (
 	"context"
 	"log"
+	"math/rand"
 	"net/http"
 	"time"
 )
 
 func processJob(ctx context.Context) chan bool {
 	ch := make(chan bool)
+	sleep := time.Duration(rand.Intn(8)) * time.Second
 
 	go func() {
+		defer close(ch)
 		log.Printf("Job Start")
 
 		select {
-		case <-time.After(time.Second * 5):
+		case <-time.After(sleep):
 			ch <- true
 			log.Printf("Job Done")
 		case <-ctx.Done():
@@ -25,9 +28,12 @@ func processJob(ctx context.Context) chan bool {
 	return ch
 }
 
+// error: context canceled
+// error: context deadline exceeded
+
 func handler(w http.ResponseWriter, r *http.Request) {
 	log.Printf("Start request")
-	ctx, cancel := context.WithTimeout(r.Context(), time.Second*3)
+	ctx, cancel := context.WithTimeout(r.Context(), time.Second*2)
 
 	defer func() {
 		log.Printf("start cancel")
