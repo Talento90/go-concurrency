@@ -14,49 +14,38 @@ func processJob(ctx context.Context) chan bool {
 
 	go func() {
 		defer close(ch)
-		log.Printf("Job Start")
 
 		select {
 		case <-time.After(sleep):
 			ch <- true
-			log.Printf("Job Done")
+			log.Printf("Job Finished")
+			return
 		case <-ctx.Done():
-			log.Printf("Job Cancelled")
+			log.Printf("Job was aborted")
 		}
 	}()
 
 	return ch
 }
 
-// error: context canceled
-// error: context deadline exceeded
-
 func handler(w http.ResponseWriter, r *http.Request) {
-	log.Printf("Start request")
 	ctx, cancel := context.WithTimeout(r.Context(), time.Second*2)
-
-	defer func() {
-		log.Printf("start cancel")
-		cancel()
-		log.Printf("end cancel")
-	}()
+	defer cancel()
 
 	select {
 	case <-ctx.Done():
-		log.Printf("Timeout request")
+		log.Printf("Error: %v", ctx.Err())
 
-		if ctx.Err() != nil {
-			log.Printf("error: %s", ctx.Err())
+		if ctx.Err() == context.Canceled {
+			w.Write([]byte("Cancelled"))
 		}
 
-		w.Write([]byte("Cancelled"))
-		return
-
+		if ctx.Err() == context.DeadlineExceeded {
+			w.Write([]byte("Timeout"))
+		}
 	case <-processJob(ctx):
-		w.Write([]byte("HELLO WORLD"))
-		log.Printf("End request")
+		w.Write([]byte("Job Done"))
 	}
-
 }
 
 func main() {
