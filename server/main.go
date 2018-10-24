@@ -31,6 +31,9 @@ func processJob(ctx context.Context) chan bool {
 func handler(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), time.Second*2)
 	defer cancel()
+	defer func(start time.Time) {
+		log.Print(time.Since(start))
+	}(time.Now())
 
 	select {
 	case <-ctx.Done():
